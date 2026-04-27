@@ -233,7 +233,7 @@ const sendMessage = async (req, res) => {
         safeData.state        && safeData.city            &&
         safeData.gender;
       const overrideStep =
-        allRequiredExceptMobile && !safeData.mobile && (parsed.next_step || 'continue') !== 'complete'
+        allRequiredExceptMobile && !safeData.mobile
           ? 'confirm_details'
           : (parsed.next_step || 'continue');
 
