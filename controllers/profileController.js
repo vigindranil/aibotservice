@@ -22,6 +22,7 @@ const saveProfile = async (req, res) => {
       `INSERT INTO users
          (name, gender, problem_type, problem_details, country, state, city, mobile, session_id)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
         name          ? String(name).trim().slice(0, 100)               : null,
         gender        ? String(gender).trim().slice(0, 20)              : null,
         problem_type  ? String(problem_type).trim().slice(0, 50)        : null,
