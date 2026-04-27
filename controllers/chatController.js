@@ -1,6 +1,10 @@
 require('dotenv').config();
 const OpenAI = require('openai');
 
+if (!process.env.OPENAI_API_KEY) {
+  console.error('❌ OPENAI_API_KEY is not set. Add it to Vercel Environment Variables.');
+}
+
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
 // ── In-memory session store (keyed by sessionId) ─────────────────────────────
@@ -259,13 +263,28 @@ const sendMessage = async (req, res) => {
     });
 
   } catch (err) {
-    console.error('OpenAI error:', err);
+    console.error('OpenAI error:', err?.message || err);
 
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({
+        message:        "Service configuration error. Please contact support.",
+        next_step:      'continue',
+        collected_data: collectedData || {}
+      });
+    }
     if (err.status === 401) {
-      return res.status(401).json({ error: 'Invalid OpenAI API key. Please check your .env file.' });
+      return res.status(500).json({
+        message:        "AI service authentication failed. Please contact support.",
+        next_step:      'continue',
+        collected_data: collectedData || {}
+      });
     }
     if (err.status === 429) {
-      return res.status(429).json({ error: 'Rate limit reached. Please wait a moment and try again.' });
+      return res.status(500).json({
+        message:        "I'm a little busy right now. Please wait a moment and try again.",
+        next_step:      'continue',
+        collected_data: collectedData || {}
+      });
     }
 
     return res.status(500).json({
