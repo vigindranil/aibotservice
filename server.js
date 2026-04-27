@@ -8,9 +8,11 @@ const app = express();
 const allowedOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
+  'https://aibot-lemon.vercel.app',
   'https://aibotservice-uawj.vercel.app',
 ];
-app.use(cors({
+
+const corsOptions = {
   origin: (origin, callback) => {
     // allow requests with no origin (e.g. curl, mobile apps)
     if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
@@ -18,8 +20,12 @@ app.use(cors({
   },
   credentials: true,
   methods: ['GET', 'POST', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+  allowedHeaders: ['Content-Type', 'Authorization'],
+};
+
+// Handle OPTIONS preflight for all routes before any other middleware
+app.options('*', cors(corsOptions));
+app.use(cors(corsOptions));
 
 app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true }));
@@ -46,6 +52,14 @@ app.use((req, res) => {
 // ── Global error handler ─────────────────────────────────────────────────────
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', err);
+  // Preserve CORS headers on error responses
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.includes(origin)) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    res.setHeader('Vary', 'Origin');
+  }
   res.status(500).json({ error: 'Internal server error' });
 });
 
