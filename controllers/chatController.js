@@ -19,9 +19,8 @@ STEP 3: Ask: "May I know your name?" → store name. IMPORTANT: Accept WHATEVER 
 STEP 4a: Ask: "Which country are you from?" → store country.
 STEP 4b: Ask: "Which state are you in?" → store state.
 STEP 4c: Ask: "Which city are you in?" → store city.
-STEP 4d: Ask: "What is your pincode?" → store pincode. Only digits are valid.
 STEP 5: Ask: "Please select your gender (Male / Female / Other)." → store gender.
-STEP 6: FINAL STEP — once all 7 fields (problem_type, problem_details, name, country, state, city, pincode, gender) are collected: say "Thank you, [name]! Your profile looks great. Let's verify your details now." and set next_step to "otp_verification". STOP — ask nothing more.
+STEP 6: FINAL STEP — once all 6 fields (problem_type, problem_details, name, country, state, city, gender) are collected: say "Thank you, [name]! Your profile looks great. Let's verify your details now." and set next_step to "otp_verification". STOP — ask nothing more.
 
 ##CRITICAL — NEVER MENTION MOBILE OR PHONE NUMBER##
 The words "mobile", "phone number", and "contact number" are FORBIDDEN. Never ask for them. Mobile is collected automatically by the app after this conversation.
@@ -31,7 +30,6 @@ Before advancing, check that the user's reply actually answers the current quest
 - STEP 2 (problem_details): must be a real skin/hair problem. If not — re-ask.
 - STEP 3 (name): ALWAYS accept the user's reply as their name. NEVER re-ask the name question.
 - STEP 4a-4c (country/state/city): must be a real place name. If not — re-ask.
-- STEP 4d (pincode): must be digits only. If not — re-ask.
 - STEP 5 (gender): must be male/female/other. If not — re-ask.
 
 OTHER RULES:
@@ -52,7 +50,6 @@ REQUIRED RESPONSE FORMAT — always respond with a single valid JSON object and 
     "country": null,
     "state": null,
     "city": null,
-    "pincode": null,
     "mobile": null
   }
 }
@@ -88,7 +85,6 @@ function getCurrentFieldHint(cd) {
   if (!cd.country)         return '[CURRENT FIELD: country. Valid = any real country name.]';
   if (!cd.state)           return '[CURRENT FIELD: state. Valid = any real state/province name.]';
   if (!cd.city)            return '[CURRENT FIELD: city. Valid = any real city name.]';
-  if (!cd.pincode)         return '[CURRENT FIELD: pincode. Valid = digits only (e.g. 400001). If not digits — re-ask.]';
   if (!cd.gender)          return '[CURRENT FIELD: gender. Valid = male, female, other. Anything else is INVALID — re-ask.]';
   // Mobile is collected via the typed OTP modal — never prompt for it in conversation.
   return '';
@@ -134,17 +130,12 @@ function isValidMobile(val) {
   return digits.length >= 7 && digits.length <= 15;
 }
 
-function isValidPincode(val) {
-  if (!val) return false;
-  return /^\d{4,10}$/.test(String(val).trim());
-}
-
 // Sanitise AI-returned collected_data against the fields already confirmed by client
 function sanitiseCollectedData(aiData, clientData) {
   if (!aiData) return clientData || {};
   const result = { ...(clientData || {}) };
 
-  const fields = ['problem_type','problem_details','name','country','state','city','pincode','gender','mobile'];
+  const fields = ['problem_type','problem_details','name','country','state','city','gender','mobile'];
   fields.forEach(f => {
     const val = aiData[f];
     if (val === null || val === undefined || val === '') return;
@@ -152,7 +143,6 @@ function sanitiseCollectedData(aiData, clientData) {
     if (f === 'problem_details' && !isValidProblemDetails(val)) return;
     if (f === 'name'            && !isValidName(val))            return;
     if (f === 'gender'          && !isValidGender(val))          return;
-    if (f === 'pincode'         && !isValidPincode(val))         return;
     if (f === 'mobile'          && !isValidMobile(val))          return;
 
     result[f] = val;
@@ -168,7 +158,6 @@ function nextFieldPrompt(cd) {
   if (!cd.country)         return 'Which country are you from?';
   if (!cd.state)           return 'Which state are you in?';
   if (!cd.city)            return 'Which city are you in?';
-  if (!cd.pincode)         return 'What is your pincode?';
   if (!cd.gender)          return 'What is your gender? (Male / Female / Other)';
   return 'Thank you! Everything looks great.';
 }
@@ -238,7 +227,7 @@ const sendMessage = async (req, res) => {
         safeData.problem_type && safeData.problem_details &&
         safeData.name         && safeData.country         &&
         safeData.state        && safeData.city            &&
-        safeData.pincode      && safeData.gender;
+        safeData.gender;
       const overrideStep =
         allRequiredExceptMobile && !safeData.mobile && (parsed.next_step || 'continue') !== 'complete'
           ? 'confirm_details'

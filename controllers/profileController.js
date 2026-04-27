@@ -4,7 +4,7 @@ const saveProfile = async (req, res) => {
   const {
     name, gender,
     problem_type, problem_details,
-    country, state, city, pincode,
+    country, state, city,
     mobile, session_id
   } = req.body;
 
@@ -20,9 +20,8 @@ const saveProfile = async (req, res) => {
   try {
     const [result] = await pool.execute(
       `INSERT INTO users
-         (name, gender, problem_type, problem_details, country, state, city, pincode, mobile, session_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [
+         (name, gender, problem_type, problem_details, country, state, city, mobile, session_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
         name          ? String(name).trim().slice(0, 100)               : null,
         gender        ? String(gender).trim().slice(0, 20)              : null,
         problem_type  ? String(problem_type).trim().slice(0, 50)        : null,
@@ -30,7 +29,6 @@ const saveProfile = async (req, res) => {
         country       ? String(country).trim().slice(0, 100)            : null,
         state         ? String(state).trim().slice(0, 100)              : null,
         city          ? String(city).trim().slice(0, 100)               : null,
-        pincode       ? String(pincode).trim().slice(0, 20)             : null,
         mobileTrimmed,
         session_id    ? String(session_id).slice(0, 100)                : null
       ]
